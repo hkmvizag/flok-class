@@ -187,34 +187,6 @@
         border-bottom: none;
       }
 
-      .badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        font-weight: 500;
-      }
-
-      .badge.student {
-        background: rgba(59, 130, 246, 0.15);
-        color: #60a5fa;
-      }
-
-      .badge.working {
-        background: rgba(34, 197, 94, 0.15);
-        color: #4ade80;
-      }
-
-      .badge.yes {
-        background: rgba(34, 197, 94, 0.15);
-        color: #4ade80;
-      }
-
-      .badge.no {
-        background: rgba(239, 68, 68, 0.15);
-        color: #f87171;
-      }
-
       .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -474,9 +446,9 @@
               <td>${escapeHTML(mobile)}</td>
               <td>${escapeHTML(name)}</td>
               <td>${escapeHTML(college)}</td>
-              <td><span class="badge ${statusClass}">${escapeHTML(status)}</span></td>
+              <td>${escapeHTML(status)}</td>
               <td>${escapeHTML(courseYear)}</td>
-              <td><span class="badge ${devoteeClass}">${escapeHTML(String(devotee))}</span></td>
+              <td>${escapeHTML(String(devotee))}</td>
             </tr>
           `;
           })

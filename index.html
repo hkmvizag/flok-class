@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Today's Attendance Report</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: #0f172a;
+        min-height: 100vh;
+        padding: 24px;
+        color: #e2e8f0;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 8px;
+      }
+
+      .header .date {
+        font-size: 1rem;
+        color: #94a3b8;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+      }
+
+      .stat-card .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #818cf8;
+      }
+
+      .stat-card .stat-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+      }
+
+      .search-box input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        color: #f8fafc;
+        font-size: 0.95rem;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .search-box input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      }
+
+      .search-box input::placeholder {
+        color: #64748b;
+      }
+
+      .search-box svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+      }
+
+      .filter-tabs {
+        display: flex;
+        gap: 8px;
+        background: #1e293b;
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+      }
+
+      .filter-tabs button {
+        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .filter-tabs button:hover {
+        color: #e2e8f0;
+      }
+
+      .filter-tabs button.active {
+        background: #6366f1;
+        color: #fff;
+      }
+
+      .table-wrapper {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        overflow-x: auto;
+      }
+
+      .data-table {
+        width: 100%;
+        min-width: 600px;
+        border-collapse: collapse;
+      }
+
+      .data-table thead {
+        background: #0f172a;
+      }
+
+      .data-table th {
+        padding: 12px 14px;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #94a3b8;
+        border-bottom: 1px solid #334155;
+      }
+
+      .data-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #1e293b;
+        color: #e2e8f0;
+        font-size: 0.85rem;
+      }
+
+      .data-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .badge.student {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+      }
+
+      .badge.working {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+      }
+
+      .badge.yes {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+      }
+
+      .badge.no {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+      }
+
+      .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .empty-state h3 {
+        font-size: 1.2rem;
+        color: #94a3b8;
+        margin-bottom: 8px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+      }
+
+      .loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #334155;
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        text-align: center;
+        padding: 40px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 16px;
+        color: #f87171;
+      }
+
+      .error h3 {
+        margin-bottom: 8px;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 16px;
+        }
+        .header h1 {
+          font-size: 1.4rem;
+        }
+        .header .date {
+          font-size: 0.85rem;
+        }
+        .stats-grid {
+          gap: 8px;
+        }
+        .stat-card {
+          padding: 12px;
+        }
+        .stat-card .stat-number {
+          font-size: 1.4rem;
+        }
+        .stat-card .stat-label {
+          font-size: 0.65rem;
+        }
+        .controls {
+          flex-direction: column;
+        }
+        .filter-tabs {
+          width: 100%;
+          justify-content: center;
+        }
+        .data-table {
+          min-width: 500px;
+        }
+        .data-table th,
+        .data-table td {
+          padding: 8px 10px;
+          font-size: 0.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Attendance Report</h1>
+        <div class="date" id="currentDate"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="statTotal">0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statStudents">0</div>
+          <div class="stat-label">Students</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statWorking">0</div>
+          <div class="stat-label">Working</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="search-box">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by name or college..."
+          />
+        </div>
+        <div class="filter-tabs">
+          <button class="active" data-filter="all">All</button>
+          <button data-filter="student">Students</button>
+          <button data-filter="working profeesional">
+            Working Professional
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrapper" id="tableWrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mobile Number</th>
+              <th>Name</th>
+              <th>College Name</th>
+              <th>Student/Working</th>
+              <th>Course & Year</th>
+              <th>In Touch</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="6">
+                <div class="loading">
+                  <div class="spinner"></div>
+                  <p>Loading attendance data...</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      // Configuration - Replace these values with your own
+      const AIRTABLE_API_KEY = "key";
+      const AIRTABLE_BASE_ID = "appeRGdpcvJduYnHb";
+      const AIRTABLE_TABLE_NAME = "tbldbmNCflZ2fKgV4";
+
+      let allRecords = [];
+      let currentFilter = "all";
+
+      // Display today's date in DD/MM/YYYY format
+      function formatDate() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, "0");
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const year = today.getFullYear();
+        document.getElementById("currentDate").textContent =
+          `${day}/${month}/${year}`;
+      }
+
+      // Escape HTML helper
+      function escapeHTML(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // Update stats
+      function updateStats(records) {
+        const total = records.length;
+        const students = records.filter(
+          (r) =>
+            (r.fields["Student/Working"] || "").toLowerCase() === "student",
+        ).length;
+        const working = records.filter(
+          (r) =>
+            (r.fields["Student/Working"] || "").toLowerCase() ===
+            "working profeesional",
+        ).length;
+
+        document.getElementById("statTotal").textContent = total;
+        document.getElementById("statStudents").textContent = students;
+        document.getElementById("statWorking").textContent = working;
+      }
+
+      // Render table
+      function renderTable(records) {
+        const tbody = document.getElementById("tableBody");
+
+        if (records.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  <h3>No records found</h3>
+                  <p>Try adjusting your search or filter</p>
+                </div>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = records
+          .map((record) => {
+            const fields = record.fields || {};
+            const mobileRaw =
+              fields["Mobile Number"] || fields["Mobile"] || "-";
+            const mobile = mobileRaw.replace(/\D/g, "");
+            const name = fields["Name"] || "-";
+            const college = fields["College Name"] || fields["College"] || "-";
+            const status = fields["Student/Working"] || "-";
+            const courseYear =
+              fields["Course & Year"] || fields["Course"] || "-";
+            const devotee = fields["Devotee In Touch"] || "-";
+
+            const statusClass = status.toLowerCase();
+            const devoteeClass =
+              devotee.toLowerCase() === "yes" || devotee === true
+                ? "yes"
+                : "no";
+
+            return `
+            <tr>
+              <td>${escapeHTML(mobile)}</td>
+              <td>${escapeHTML(name)}</td>
+              <td>${escapeHTML(college)}</td>
+              <td><span class="badge ${statusClass}">${escapeHTML(status)}</span></td>
+              <td>${escapeHTML(courseYear)}</td>
+              <td><span class="badge ${devoteeClass}">${escapeHTML(String(devotee))}</span></td>
+            </tr>
+          `;
+          })
+          .join("");
+      }
+
+      // Filter and search records
+      function filterRecords() {
+        const searchTerm = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        let filtered = allRecords;
+
+        // Apply status filter
+        if (currentFilter === "student") {
+          filtered = filtered.filter(
+            (r) =>
+              (r.fields["Student/Working"] || "").toLowerCase() === "student",
+          );
+        } else if (currentFilter === "working profeesional") {
+          filtered = filtered.filter(
+            (r) =>
+              (r.fields["Student/Working"] || "").toLowerCase() ===
+              "working profeesional",
+          );
+        }
+
+        // Apply search
+        if (searchTerm) {
+          filtered = filtered.filter((r) => {
+            const name = (r.fields["Name"] || "").toLowerCase();
+            const college = (
+              r.fields["College Name"] ||
+              r.fields["College"] ||
+              ""
+            ).toLowerCase();
+            return name.includes(searchTerm) || college.includes(searchTerm);
+          });
+        }
+
+        renderTable(filtered);
+      }
+
+      // Setup filter tabs
+      function setupFilters() {
+        document.querySelectorAll(".filter-tabs button").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".filter-tabs button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentFilter = btn.dataset.filter;
+            filterRecords();
+          });
+        });
+
+        document
+          .getElementById("searchInput")
+          .addEventListener("input", filterRecords);
+      }
+
+      // Fetch data from Airtable
+      async function fetchAttendance() {
+        const tableWrapper = document.getElementById("tableWrapper");
+
+        try {
+          const url = `https://api.airtable.com/v0/appeRGdpcvJduYnHb/tbldbmNCflZ2fKgV4?view=viw8oOLDEs8hRoOUs`;
+
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Airtable API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          allRecords = data.records || [];
+
+          updateStats(allRecords);
+          renderTable(allRecords);
+        } catch (error) {
+          document.getElementById("tableBody").innerHTML = `
+            <tr>
+              <td colspan="6">
+                <div class="error">
+                  <h3>Error Loading Data</h3>
+                  <p>${error.message}</p>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+      }
+
+      // Initialize
+      formatDate();
+      setupFilters();
+      fetchAttendance();
+    </script>
+  </body>
+</html>

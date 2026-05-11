@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Today's Attendance Report</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+
+      .header .date {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      .table-container {
+        padding: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th {
+        background: #f8f9fa;
+        color: #333;
+        font-weight: 600;
+        text-align: left;
+        padding: 15px;
+        border-bottom: 2px solid #667eea;
+      }
+
+      td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+      }
+
+      tr:hover {
+        background: #f8f9fa;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .status.student {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+
+      .status.working {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .status.yes {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .status.no {
+        background: #ffebee;
+        color: #c62828;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+
+      .error {
+        text-align: center;
+        padding: 40px;
+        color: #c62828;
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 1.5rem;
+        }
+
+        th,
+        td {
+          padding: 10px;
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Today's Attendance Report</h1>
+        <div class="date" id="currentDate"></div>
+      </div>
+      <div class="table-container">
+        <div id="content">
+          <div class="loading">Loading attendance data...</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration - Replace these values with your own
+      const AIRTABLE_API_KEY = "YOUR_API_KEY_HERE";
+      const AIRTABLE_BASE_ID = "appeRGdpcvJduYnHb";
+      const AIRTABLE_TABLE_NAME = "tbldbmNCflZ2fKgV4";
+
+      // Display today's date in DD/MM/YYYY format
+      function formatDate() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, "0");
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const year = today.getFullYear();
+        document.getElementById("currentDate").textContent =
+          `Date: ${day}/${month}/${year}`;
+      }
+
+      // Fetch data from Airtable
+      async function fetchAttendance() {
+        const contentDiv = document.getElementById("content");
+
+        try {
+          // Check if API key is configured
+          if (AIRTABLE_API_KEY === "YOUR_API_KEY_HERE") {
+            contentDiv.innerHTML = `
+                        <div class="error">
+                            <h3>⚠️ Configuration Required</h3>
+                            <p>Please update the script with your Airtable credentials:</p>
+                            <ul style="text-align: left; margin-top: 10px;">
+                                <li><strong>AIRTABLE_API_KEY</strong> - Your Airtable Personal Access Token</li>
+                                <li><strong>AIRTABLE_BASE_ID</strong> - Found in your Airtable API docs (starts with 'app')</li>
+                                <li><strong>AIRTABLE_TABLE_NAME</strong> - Your table name</li>
+                            </ul>
+                        </div>
+                    `;
+            return;
+          }
+
+          const url = `https://api.airtable.com/v0/appeRGdpcvJduYnHb/tbldbmNCflZ2fKgV4?view=viw8oOLDEs8hRoOUs`;
+
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Airtable API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          const records = data.records || [];
+
+          if (records.length === 0) {
+            contentDiv.innerHTML =
+              '<div class="loading">No records found for today.</div>';
+            return;
+          }
+
+          // Build table
+          let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>College Name</th>
+                                <th>Student/Working</th>
+                                <th>Devotee In Touch</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+          records.forEach((record) => {
+            const fields = record.fields || {};
+
+            // Get field values - update these to match your actual field names
+            const name = fields["Name"] || "-";
+            const college = fields["College Name"] || fields["College"] || "-";
+            const status = fields["Student/Working"] || fields["Status"] || "-";
+            const devotee =
+              fields["Devotee In Touch"] || fields["Devotee"] || "-";
+
+            // Format status badges
+            let statusClass = "";
+            let statusDisplay = status;
+
+            if (status.toLowerCase() === "student") {
+              statusClass = "student";
+            } else if (status.toLowerCase() === "working") {
+              statusClass = "working";
+            }
+
+            // Format devotee response
+            let devoteeClass = "";
+            if (devotee.toLowerCase() === "yes" || devotee === true) {
+              devoteeClass = "yes";
+            } else if (devotee.toLowerCase() === "no" || devotee === false) {
+              devoteeClass = "no";
+            }
+
+            tableHTML += `
+                        <tr>
+                            <td><strong>${escapeHTML(name)}</strong></td>
+                            <td>${escapeHTML(college)}</td>
+                            <td><span class="status ${statusClass}">${escapeHTML(status)}</span></td>
+                            <td><span class="status ${devoteeClass}">${escapeHTML(String(devotee))}</span></td>
+                        </tr>
+                    `;
+          });
+
+          tableHTML += "</tbody></table>";
+          contentDiv.innerHTML = tableHTML;
+        } catch (error) {
+          contentDiv.innerHTML = `
+                    <div class="error">
+                        <h3>Error Loading Data</h3>
+                        <p>${error.message}</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Please check your API credentials and try again.</p>
+                    </div>
+                `;
+        }
+      }
+
+      // Helper to escape HTML
+      function escapeHTML(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // Initialize
+      formatDate();
+      fetchAttendance();
+    </script>
+  </body>
+</html>

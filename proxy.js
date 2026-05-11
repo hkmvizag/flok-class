@@ -1,7 +1,7 @@
 const http = require("http");
 const https = require("https");
 
-const AIRTABLE_API_KEY = "key";
+const AIRTABLE_API_KEY = "patRkyVYUVONqOCje.6112547b254199d937ca2d1323fe959540aace1d2959e48a062db6eebc933c3d";
 const AIRTABLE_BASE_ID = "appeRGdpcvJduYnHb";
 const AIRTABLE_TABLE = "Attendance";
 const AIRTABLE_VIEW = "viw8oOLDEs8hRoOUs";
